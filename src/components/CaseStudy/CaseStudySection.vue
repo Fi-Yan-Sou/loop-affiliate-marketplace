@@ -57,7 +57,7 @@ const galleryImages = [
 }
 
 .case-studies__gallery-col :deep(.case-gallery__frame) {
-  aspect-ratio: 16 / 7;
+  aspect-ratio: 16 / 6.5;
   border-radius: var(--radius-gallery);
 }
 
@@ -69,7 +69,7 @@ const galleryImages = [
 
 @media (max-width: 768px) {
   .case-studies__gallery-col :deep(.case-gallery__frame) {
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 4 / 4.5;
     border-radius: var(--radius-image);
   }
 }
