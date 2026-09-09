@@ -106,7 +106,7 @@ const backToHome = () => {
 // renders. setDate() handles month/year rollover automatically (e.g.
 // Dec 30 + 5 days correctly becomes a January date the following year).
 const formatDeliveryDate = (date) =>
-  date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+  date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 const estimatedDelivery = computed(() => {
   const today = new Date();
