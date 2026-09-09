@@ -106,7 +106,7 @@ const backToHome = () => {
 // renders. setDate() handles month/year rollover automatically (e.g.
 // Dec 30 + 5 days correctly becomes a January date the following year).
 const formatDeliveryDate = (date) =>
-  date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+  date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 const estimatedDelivery = computed(() => {
   const today = new Date();
@@ -165,7 +165,9 @@ const estimatedDelivery = computed(() => {
         </div>
 
         <div class="product-details__info-col">
-          <span v-if="product.bestSeller" class="product-details__bestseller">Bestseller</span>
+          <span v-if="product.bestSeller" class="product-details__bestseller"
+            >Bestseller</span
+          >
           <span class="product-details__brand">{{ product.brand }}</span>
           <h1 class="product-details__title">{{ product.title }}</h1>
 
@@ -188,10 +190,7 @@ const estimatedDelivery = computed(() => {
           <!-- <p class="product-details__description">{{ product.description }}</p> -->
 
           <ColorSelector v-model="selectedColor" :colors="product.colors" />
-          <SizeSelector
-            v-model="selectedSize"
-            :sizes="effectiveSizes"
-          />
+          <SizeSelector v-model="selectedSize" :sizes="effectiveSizes" />
 
           <BuyButtons :selected-size="selectedSize" />
 

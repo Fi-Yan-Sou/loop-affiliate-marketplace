@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   plugins: [vue()],
-  base: "Fi-Yan-Sou-loop-affiliate",
+  base: "/loop-affiliate-marketplace/",
   server: {
     port: 5173
   }

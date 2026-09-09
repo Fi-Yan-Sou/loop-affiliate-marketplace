@@ -1,86 +1,179 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, watch } from "vue";
 
 const props = defineProps({
-  images: { type: Array, required: true }
-})
+  images: { type: Array, required: true },
+});
 
-const activeIndex = ref(0)
+// Display mode depends on how many images this case study has:
+// - 4 or fewer: every image is shown at once in a single static row.
+// - more than 4: a bounded sliding-window carousel showing 4 at a time.
+const VISIBLE_COUNT = 4;
+const isSlider = computed(() => props.images.length > VISIBLE_COUNT);
 
-const goTo = (index) => {
-  activeIndex.value = (index + props.images.length) % props.images.length
-}
+const startIndex = ref(0);
 
-const next = () => goTo(activeIndex.value + 1)
-const prev = () => goTo(activeIndex.value - 1)
+// The last valid window start — sliding stops here rather than wrapping,
+// so no image is ever duplicated or skipped.
+const maxStartIndex = computed(() =>
+  Math.max(0, props.images.length - VISIBLE_COUNT),
+);
 
-// Touch swipe support (mobile only — arrows are hidden there via CSS).
-const SWIPE_THRESHOLD = 40
-let touchStartX = 0
-let touchDeltaX = 0
+// Reset position whenever the images prop changes (e.g. a different case
+// study's images are passed in), the same defensive pattern used by the
+// other galleries in this project (see ProductGallery.vue).
+watch(
+  () => props.images,
+  () => {
+    startIndex.value = 0;
+  },
+);
+
+const canPrev = computed(() => startIndex.value > 0);
+const canNext = computed(() => startIndex.value < maxStartIndex.value);
+
+const next = () => {
+  if (canNext.value) startIndex.value += 1;
+};
+
+const prev = () => {
+  if (canPrev.value) startIndex.value -= 1;
+};
+
+// Each slide's rendered width already accounts for the var(--space-3) gaps
+// between them (see .case-gallery__slide), so the per-step shift is exactly
+// one slide-width plus one gap: (100% + gap) / VISIBLE_COUNT. This keeps the
+// transform in sync with the CSS regardless of the frame's actual pixel
+// width at any breakpoint.
+const trackStyle = computed(() => ({
+  transform: `translateX(calc(${-startIndex.value} * (100% + var(--space-3)) / ${VISIBLE_COUNT}))`,
+}));
+
+// Touch swipe support (mobile only — arrows are hidden there via CSS),
+// following the same pattern used elsewhere in this project (see
+// ProductGallery.vue). Movement is only treated as a swipe once it's
+// clearly more horizontal than vertical, so normal vertical page
+// scrolling is never hijacked.
+const SWIPE_THRESHOLD = 40;
+let touchStartX = 0;
+let touchStartY = 0;
+let touchDeltaX = 0;
+let touchDeltaY = 0;
 
 const onTouchStart = (event) => {
-  touchStartX = event.touches[0].clientX
-  touchDeltaX = 0
-}
+  touchStartX = event.touches[0].clientX;
+  touchStartY = event.touches[0].clientY;
+  touchDeltaX = 0;
+  touchDeltaY = 0;
+};
 
 const onTouchMove = (event) => {
-  touchDeltaX = event.touches[0].clientX - touchStartX
-}
+  touchDeltaX = event.touches[0].clientX - touchStartX;
+  touchDeltaY = event.touches[0].clientY - touchStartY;
+};
 
 const onTouchEnd = () => {
-  if (touchDeltaX <= -SWIPE_THRESHOLD) {
-    next()
-  } else if (touchDeltaX >= SWIPE_THRESHOLD) {
-    prev()
+  if (Math.abs(touchDeltaX) > Math.abs(touchDeltaY)) {
+    if (touchDeltaX <= -SWIPE_THRESHOLD) {
+      next();
+    } else if (touchDeltaX >= SWIPE_THRESHOLD) {
+      prev();
+    }
   }
-  touchDeltaX = 0
-}
+  touchDeltaX = 0;
+  touchDeltaY = 0;
+};
 </script>
 
 <template>
-  <div class="case-gallery" role="region" aria-roledescription="gallery" aria-label="Customer photo gallery">
+  <div class="case-gallery" role="region" aria-label="Customer photo gallery">
     <div
       class="case-gallery__frame"
+      :aria-roledescription="isSlider ? 'carousel' : 'gallery'"
       aria-live="polite"
-      @touchstart="onTouchStart"
-      @touchmove="onTouchMove"
-      @touchend="onTouchEnd"
+      @touchstart="isSlider && onTouchStart($event)"
+      @touchmove="isSlider && onTouchMove($event)"
+      @touchend="isSlider && onTouchEnd($event)"
     >
-      <Transition name="case-gallery-fade" mode="out-in">
-        <img
-          :key="activeIndex"
-          :src="images[activeIndex]"
-          :alt="`Customer receiving and unboxing their order — photo ${activeIndex + 1} of ${images.length}`"
-          loading="lazy"
-          class="case-gallery__image"
-        />
-      </Transition>
+      <!-- CASE A: 4 or fewer images — every image shown in one static row -->
+      <div v-if="!isSlider" class="case-gallery__row">
+        <div
+          v-for="(image, index) in images"
+          :key="index"
+          class="case-gallery__row-item"
+        >
+          <img
+            :src="image"
+            :alt="`Customer receiving and unboxing their order — photo ${index + 1} of ${images.length}`"
+            loading="lazy"
+          />
+        </div>
+      </div>
 
-      <button type="button" class="case-gallery__arrow case-gallery__arrow--prev" aria-label="Previous photo" @click="prev">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M15 18l-6-6 6-6" stroke="#111827" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      </button>
-      <button type="button" class="case-gallery__arrow case-gallery__arrow--next" aria-label="Next photo" @click="next">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M9 6l6 6-6 6" stroke="#111827" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      </button>
-    </div>
+      <!-- CASE B: more than 4 images — sliding window carousel, 4 visible at a time -->
+      <div v-else class="case-gallery__track" role="list" :style="trackStyle">
+        <div
+          v-for="(image, index) in images"
+          :key="index"
+          class="case-gallery__slide"
+          role="listitem"
+        >
+          <img
+            :src="image"
+            :alt="`Customer receiving and unboxing their order — photo ${index + 1} of ${images.length}`"
+            loading="lazy"
+          />
+        </div>
+      </div>
 
-    <div class="case-gallery__dots" role="tablist" aria-label="Gallery navigation">
-      <button
-        v-for="(image, index) in images"
-        :key="index"
-        type="button"
-        class="case-gallery__dot"
-        :class="{ 'case-gallery__dot--active': index === activeIndex }"
-        role="tab"
-        :aria-selected="index === activeIndex"
-        :aria-label="`Go to photo ${index + 1}`"
-        @click="goTo(index)"
-      />
+      <template v-if="isSlider">
+        <button
+          type="button"
+          class="case-gallery__arrow case-gallery__arrow--prev"
+          aria-label="Previous photos"
+          :disabled="!canPrev"
+          @click="prev"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M15 18l-6-6 6-6"
+              stroke="#111827"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="case-gallery__arrow case-gallery__arrow--next"
+          aria-label="Next photos"
+          :disabled="!canNext"
+          @click="next"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M9 6l6 6-6 6"
+              stroke="#111827"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      </template>
     </div>
   </div>
 </template>
@@ -95,26 +188,57 @@ const onTouchEnd = () => {
 .case-gallery__frame {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 4 / 4.5;
   border-radius: var(--radius-gallery);
   overflow: hidden;
   box-shadow: var(--shadow-card);
 }
 
-.case-gallery__image {
+/* CASE A: static row — every image visible, equal width, one line */
+.case-gallery__row {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  height: 100%;
+  gap: var(--space-3);
+}
+
+.case-gallery__row-item {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+}
+
+.case-gallery__row-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
-.case-gallery-fade-enter-active,
-.case-gallery-fade-leave-active {
-  transition: opacity 0.4s ease;
+/* CASE B: sliding window carousel — 4 slides visible, smooth transform transition */
+.case-gallery__track {
+  display: flex;
+  flex-wrap: nowrap;
+  height: 100%;
+  gap: var(--space-3);
+  transition: transform 0.4s ease;
 }
 
-.case-gallery-fade-enter-from,
-.case-gallery-fade-leave-to {
-  opacity: 0;
+/* Width accounts for the 3 gaps between the 4 visible slides, so 4 slides +
+   3 gaps sum to exactly 100% of the frame — never more, never fewer than
+   4 images are shown at once. Keep this in sync with VISIBLE_COUNT above. */
+.case-gallery__slide {
+  flex: 0 0 calc((100% - 3 * var(--space-3)) / 4);
+  max-width: calc((100% - 3 * var(--space-3)) / 4);
+  height: 100%;
+}
+
+.case-gallery__slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .case-gallery__arrow {
@@ -129,12 +253,21 @@ const onTouchEnd = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform var(--transition-fast), background-color var(--transition-fast);
+  z-index: 2;
+  transition:
+    transform var(--transition-fast),
+    background-color var(--transition-fast),
+    opacity var(--transition-fast);
 }
 
-.case-gallery__arrow:hover {
+.case-gallery__arrow:not(:disabled):hover {
   background-color: #fff;
   transform: translateY(-50%) scale(1.08);
+}
+
+.case-gallery__arrow:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .case-gallery__arrow--prev {
@@ -143,25 +276,6 @@ const onTouchEnd = () => {
 
 .case-gallery__arrow--next {
   right: 12px;
-}
-
-.case-gallery__dots {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
-
-.case-gallery__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--color-border);
-  transition: background-color var(--transition-fast), transform var(--transition-fast);
-}
-
-.case-gallery__dot--active {
-  background-color: var(--color-primary);
-  transform: scale(1.3);
 }
 
 @media (max-width: 768px) {

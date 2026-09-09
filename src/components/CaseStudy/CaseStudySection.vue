@@ -1,12 +1,12 @@
 <script setup>
-import CaseStudyGallery from './CaseStudyGallery.vue'
+import CaseStudyGallery from "./CaseStudyGallery.vue";
 
 const galleryImages = [
-  'https://picsum.photos/seed/customer-unboxing-1/900/1125',
-  'https://picsum.photos/seed/customer-delivery-2/900/1125',
-  'https://picsum.photos/seed/customer-smiling-3/900/1125',
-  'https://picsum.photos/seed/customer-package-4/900/1125'
-]
+  "https://picsum.photos/seed/customer-unboxing-1/900/1125",
+  "https://picsum.photos/seed/customer-delivery-2/900/1125",
+  "https://picsum.photos/seed/customer-smiling-3/900/1125",
+  "https://picsum.photos/seed/customer-package-4/900/1125",
+];
 </script>
 
 <template>
@@ -57,7 +57,7 @@ const galleryImages = [
 }
 
 .case-studies__gallery-col :deep(.case-gallery__frame) {
-  aspect-ratio: 16 / 7;
+  aspect-ratio: 16 / 6.5;
   border-radius: var(--radius-gallery);
 }
 
@@ -69,7 +69,7 @@ const galleryImages = [
 
 @media (max-width: 768px) {
   .case-studies__gallery-col :deep(.case-gallery__frame) {
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 4 / 4.5;
     border-radius: var(--radius-image);
   }
 }
