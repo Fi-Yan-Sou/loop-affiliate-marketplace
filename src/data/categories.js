@@ -3,8 +3,7 @@ export const categories = [
   { id: 'swimwear', label: 'Swimwear' },
   { id: 'tops', label: 'Tops' },
   { id: 'accessories', label: 'Accessories' },
-  { id: 'shorts', label: 'Shorts' },
-  { id: 'scarves', label: 'Scarves' }
+  { id: 'shorts', label: 'Shorts' }
 ]
 
 export const genders = [
