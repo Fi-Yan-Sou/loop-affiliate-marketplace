@@ -1,14 +1,15 @@
 export const brands = [
-  'Nike',
-  'Adidas',
-  'The North Face',
-  'Carhartt WIP',
-  'Levi\'s',
-  'Champion',
-  'Stussy',
-  'Ralph Lauren',
-  'Patagonia',
-  'New Balance',
-  'Fear of God Essentials',
-  'Zara'
+  'Prada',
+  'Gucci',
+  'Miu Miu',
+  'Amiri',
+  'Christian Dior',
+  'Dior',
+  'Burberry',
+  'Mixed (Dior / Burberry)',
+  'Fendi',
+  'Louis Vuitton',
+  'Versace',
+  'Celine',
+  'Acne Studios'
 ]

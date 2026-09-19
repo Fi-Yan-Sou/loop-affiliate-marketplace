@@ -1,11 +1,10 @@
 export const categories = [
-  { id: 'hoodies', label: 'Hoodies' },
-  { id: 'shirts', label: 'Shirts' },
-  { id: 't-shirts', label: 'T-Shirts' },
-  { id: 'jackets', label: 'Jackets' },
+  { id: 'hats', label: 'Hats' },
+  { id: 'swimwear', label: 'Swimwear' },
+  { id: 'tops', label: 'Tops' },
+  { id: 'accessories', label: 'Accessories' },
   { id: 'shorts', label: 'Shorts' },
-  { id: 'pants', label: 'Pants' },
-  { id: 'sneakers', label: 'Sneakers' }
+  { id: 'scarves', label: 'Scarves' }
 ]
 
 export const genders = [
