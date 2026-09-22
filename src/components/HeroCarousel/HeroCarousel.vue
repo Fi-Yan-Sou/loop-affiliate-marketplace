@@ -102,7 +102,6 @@ onBeforeUnmount(stopAutoplay)
             <img
               :src="heroSlides[activeIndex].image"
               :alt="`${heroSlides[activeIndex].eyebrow} — ${heroSlides[activeIndex].title}`"
-              loading="lazy"
               class="hero__image"
             />
             <div class="hero__overlay"></div>

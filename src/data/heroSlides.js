@@ -1,7 +1,7 @@
 export const heroSlides = [
   {
     id: 1,
-    image: 'https://picsum.photos/seed/hero-streetwear/1600/800',
+    image: 'https://picsum.photos/seed/hero-streetwear/1600/800.webp',
     eyebrow: 'New Arrivals',
     title: 'Premium Streetwear Collection',
     subtitle: 'Trusted Sellers. Authentic Products.',
@@ -10,7 +10,7 @@ export const heroSlides = [
   },
   {
     id: 2,
-    image: 'https://picsum.photos/seed/hero-rare/1600/800',
+    image: 'https://picsum.photos/seed/hero-rare/1600/800.webp',
     eyebrow: 'Curated Picks',
     title: 'Discover Rare Fashion Pieces',
     subtitle: 'Shop from verified listings on eBay & Depop.',
@@ -19,7 +19,7 @@ export const heroSlides = [
   },
   {
     id: 3,
-    image: 'https://picsum.photos/seed/hero-sneakers/1600/800',
+    image: 'https://picsum.photos/seed/hero-sneakers/1600/800.webp',
     eyebrow: 'Trending Now',
     title: 'Sneakers Everyone Is Talking About',
     subtitle: 'Verified pairs from sellers you can trust.',
