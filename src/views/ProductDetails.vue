@@ -12,6 +12,14 @@ import RelatedProducts from "../components/RelatedProducts/RelatedProducts.vue";
 import ProductDetailsSkeleton from "../components/ProductDetailsSkeleton/ProductDetailsSkeleton.vue";
 import StateMessage from "../components/StateMessage/StateMessage.vue";
 import { fetchProductById, fetchRelatedProducts } from "../services/api.js";
+import {
+  setTitle,
+  setMetaDescription,
+  setCanonicalUrl,
+  truncateDescription,
+  DEFAULT_DESCRIPTION,
+  SITE_URL,
+} from "../utils/seo.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -40,10 +48,25 @@ const loadProduct = async () => {
 
     if (!result) {
       notFound.value = true;
+      // No real product to describe at this URL — fall back to the site's
+      // default description and drop any canonical left over from whatever
+      // product page was open before this navigation. Title is unaffected:
+      // the router guard already set it to the static "Product Details —
+      // Loop" default for this route before loadProduct() started.
+      setMetaDescription(DEFAULT_DESCRIPTION);
+      setCanonicalUrl(null);
       return;
     }
 
     product.value = result;
+
+    // Per-product SEO tags — generated only from this product's own data,
+    // never invented. Runs on every load, including product-to-product
+    // navigation via Related Products, so nothing from the previous
+    // product's title/description/canonical is ever left behind.
+    setTitle(`${result.title} | ${result.brand} — ABCD Outfit`);
+    setMetaDescription(truncateDescription(result.description));
+    setCanonicalUrl(`${SITE_URL}/product/${result.id}`);
 
     if (result.colors.length) {
       selectedColor.value = result.colors[0];
@@ -64,6 +87,11 @@ const loadProduct = async () => {
     }
   } catch (err) {
     loadError.value = err.message;
+    // Same reasoning as the notFound branch above: no product data exists
+    // to describe, so fall back to the default description and clear any
+    // stale canonical from a previously viewed product.
+    setMetaDescription(DEFAULT_DESCRIPTION);
+    setCanonicalUrl(null);
   } finally {
     isLoading.value = false;
   }
