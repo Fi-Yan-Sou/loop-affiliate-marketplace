@@ -16,6 +16,8 @@ import {
   setTitle,
   setMetaDescription,
   setCanonicalUrl,
+  setProductStructuredData,
+  removeProductStructuredData,
   truncateDescription,
   DEFAULT_DESCRIPTION,
   SITE_URL,
@@ -55,6 +57,7 @@ const loadProduct = async () => {
       // Loop" default for this route before loadProduct() started.
       setMetaDescription(DEFAULT_DESCRIPTION);
       setCanonicalUrl(null);
+      removeProductStructuredData();
       return;
     }
 
@@ -63,10 +66,12 @@ const loadProduct = async () => {
     // Per-product SEO tags — generated only from this product's own data,
     // never invented. Runs on every load, including product-to-product
     // navigation via Related Products, so nothing from the previous
-    // product's title/description/canonical is ever left behind.
+    // product's title/description/canonical/structured-data is ever left
+    // behind.
     setTitle(`${result.title} | ${result.brand} — ABCD Outfit`);
     setMetaDescription(truncateDescription(result.description));
     setCanonicalUrl(`${SITE_URL}/product/${result.id}`);
+    setProductStructuredData(result);
 
     if (result.colors.length) {
       selectedColor.value = result.colors[0];
@@ -92,6 +97,7 @@ const loadProduct = async () => {
     // stale canonical from a previously viewed product.
     setMetaDescription(DEFAULT_DESCRIPTION);
     setCanonicalUrl(null);
+    removeProductStructuredData();
   } finally {
     isLoading.value = false;
   }

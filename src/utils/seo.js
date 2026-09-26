@@ -72,3 +72,108 @@ export function truncateDescription(text, maxLength = 160) {
 
   return `${safeCut}…`
 }
+
+/* -------------------------------------------------------------------------
+ * SEO Phase 2 — Product structured data (JSON-LD)
+ * ---------------------------------------------------------------------- */
+
+// Stable id so the tag can always be found-and-replaced instead of appended.
+const PRODUCT_JSONLD_ID = 'product-structured-data'
+
+/**
+ * This project's `condition` field only ever contains "New" or
+ * "New with Tags" (confirmed by inspecting src/data/products.js). Both
+ * describe brand-new, unworn merchandise, so both map to Schema.org's
+ * NewCondition — there is no separate schema.org enum value for "with
+ * tags". Any other/missing condition is intentionally left unmapped
+ * (returns null) rather than guessed, per Phase 2 scope.
+ */
+function mapItemCondition(condition) {
+  if (!condition) return null
+  const normalized = String(condition).trim().toLowerCase()
+  if (normalized === 'new' || normalized === 'new with tags') {
+    return 'https://schema.org/NewCondition'
+  }
+  return null
+}
+
+/**
+ * This project's `stock` field is a plain boolean (confirmed: every one of
+ * the 58 products currently has `stock: true`, but the field is a real
+ * boolean, not always-true by type — so both directions are mapped
+ * correctly rather than only handling the case seen today).
+ */
+function mapAvailability(stock) {
+  return stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock'
+}
+
+/**
+ * Vite-resolved local image imports become root-relative paths (e.g.
+ * "/assets/xyz123.jpeg") in production, not fully-qualified URLs. Schema.org
+ * Product images should be absolute, so this only prefixes SITE_URL when
+ * the path isn't already absolute — it never invents or alters the path
+ * itself.
+ */
+function toAbsoluteImageUrl(path) {
+  if (!path) return null
+  if (/^https?:\/\//i.test(path)) return path
+  return `${SITE_URL}${path.startsWith('/') ? '' : '/'}${path}`
+}
+
+/**
+ * Builds and injects a single Product JSON-LD <script> tag from the given
+ * product object, replacing any previously injected one in place (never
+ * appending), so navigating product → product never leaves a stale or
+ * duplicate block behind.
+ *
+ * Deliberately uses the product's stable top-level `images` array (present
+ * and non-empty on all 58 products) rather than the currently selected
+ * color's images, so the structured data doesn't change based on a
+ * temporary UI selection.
+ *
+ * Deliberately does NOT include aggregateRating — see the Phase 2 report
+ * for why this project's rating/reviewCount data was judged to be
+ * decorative placeholder data rather than genuine aggregated reviews.
+ */
+export function setProductStructuredData(product) {
+  if (!product) return
+
+  const images = (product.images || []).map(toAbsoluteImageUrl).filter(Boolean)
+  const itemCondition = mapItemCondition(product.condition)
+
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    description: product.description,
+    ...(images.length ? { image: images } : {}),
+    ...(product.brand ? { brand: { '@type': 'Brand', name: product.brand } } : {}),
+    offers: {
+      '@type': 'Offer',
+      url: `${SITE_URL}/product/${product.id}`,
+      priceCurrency: 'USD',
+      price: String(product.currentPrice),
+      availability: mapAvailability(product.stock),
+      ...(itemCondition ? { itemCondition } : {}),
+    },
+  }
+
+  let tag = document.getElementById(PRODUCT_JSONLD_ID)
+  if (!tag) {
+    tag = document.createElement('script')
+    tag.type = 'application/ld+json'
+    tag.id = PRODUCT_JSONLD_ID
+    document.head.appendChild(tag)
+  }
+  tag.textContent = JSON.stringify(data)
+}
+
+/**
+ * Removes the Product JSON-LD block entirely. Used whenever there is no
+ * valid product to describe: navigating to Home, NotFound, an invalid
+ * /product/:id, or a genuine product-load failure.
+ */
+export function removeProductStructuredData() {
+  const tag = document.getElementById(PRODUCT_JSONLD_ID)
+  if (tag) tag.remove()
+}

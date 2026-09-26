@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { setMetaDescription, setCanonicalUrl, DEFAULT_DESCRIPTION, SITE_URL } from '../utils/seo.js'
+import { setMetaDescription, setCanonicalUrl, removeProductStructuredData, DEFAULT_DESCRIPTION, SITE_URL } from '../utils/seo.js'
 
 const routes = [
   {
@@ -49,9 +49,11 @@ router.beforeEach((to, from, next) => {
   if (to.name === 'Home') {
     setMetaDescription(DEFAULT_DESCRIPTION)
     setCanonicalUrl(`${SITE_URL}/`)
+    removeProductStructuredData()
   } else if (to.name === 'NotFound') {
     setMetaDescription(DEFAULT_DESCRIPTION)
     setCanonicalUrl(null)
+    removeProductStructuredData()
   }
 
   next()
