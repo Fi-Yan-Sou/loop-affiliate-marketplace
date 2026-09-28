@@ -114,7 +114,7 @@ function mapAvailability(stock) {
  * the path isn't already absolute — it never invents or alters the path
  * itself.
  */
-function toAbsoluteImageUrl(path) {
+export function toAbsoluteImageUrl(path) {
   if (!path) return null
   if (/^https?:\/\//i.test(path)) return path
   return `${SITE_URL}${path.startsWith('/') ? '' : '/'}${path}`
@@ -176,4 +176,73 @@ export function setProductStructuredData(product) {
 export function removeProductStructuredData() {
   const tag = document.getElementById(PRODUCT_JSONLD_ID)
   if (tag) tag.remove()
+}
+
+/* -------------------------------------------------------------------------
+ * SEO Phase 3 — Open Graph / Twitter Card social metadata
+ * ---------------------------------------------------------------------- */
+
+const OG_KEYS = ['og:title', 'og:description', 'og:image', 'og:url', 'og:type']
+const TWITTER_KEYS = ['twitter:card', 'twitter:title', 'twitter:description', 'twitter:image']
+
+/**
+ * Finds-or-creates a single <meta> tag identified by (attr, key) — e.g.
+ * ('property', 'og:title') or ('name', 'twitter:card') — and updates its
+ * content in place, the same find/update pattern every other tag helper in
+ * this file already uses. Passing a falsy `content` removes the tag
+ * entirely instead of writing an empty one — this is how og:image /
+ * twitter:image get cleanly omitted when no reliable image exists.
+ */
+function setSocialMetaTag(attr, key, content) {
+  let tag = document.querySelector(`meta[${attr}="${key}"]`)
+
+  if (!content) {
+    if (tag) tag.remove()
+    return
+  }
+
+  if (!tag) {
+    tag = document.createElement('meta')
+    tag.setAttribute(attr, key)
+    document.head.appendChild(tag)
+  }
+  tag.setAttribute('content', content)
+}
+
+/**
+ * Sets the five Open Graph tags for the current page. Pass `image: null`
+ * (or omit it) to remove og:image entirely rather than write it empty —
+ * used for the homepage, which has no reliable permanent social image.
+ */
+export function setOpenGraph({ title, description, image, url, type }) {
+  setSocialMetaTag('property', 'og:title', title)
+  setSocialMetaTag('property', 'og:description', description)
+  setSocialMetaTag('property', 'og:image', image)
+  setSocialMetaTag('property', 'og:url', url)
+  setSocialMetaTag('property', 'og:type', type)
+}
+
+/**
+ * Sets the Twitter Card tags. twitter:card is always "summary_large_image"
+ * per Phase 3 scope. `image` follows the same omit-if-falsy rule as
+ * setOpenGraph's og:image, and callers are expected to pass the identical
+ * title/description/image values used for setOpenGraph (Phase 3 requires
+ * Twitter to mirror Open Graph exactly).
+ */
+export function setTwitterCard({ title, description, image }) {
+  setSocialMetaTag('name', 'twitter:card', 'summary_large_image')
+  setSocialMetaTag('name', 'twitter:title', title)
+  setSocialMetaTag('name', 'twitter:description', description)
+  setSocialMetaTag('name', 'twitter:image', image)
+}
+
+/**
+ * Removes every Open Graph and Twitter Card tag this module manages. Used
+ * for the NotFound route: a 404 has no page-specific content worth sharing,
+ * so rather than leave stale product/homepage values behind, all social
+ * tags are simply removed.
+ */
+export function removeSocialMeta() {
+  OG_KEYS.forEach((key) => setSocialMetaTag('property', key, null))
+  TWITTER_KEYS.forEach((key) => setSocialMetaTag('name', key, null))
 }

@@ -1,5 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { setMetaDescription, setCanonicalUrl, removeProductStructuredData, DEFAULT_DESCRIPTION, SITE_URL } from '../utils/seo.js'
+import {
+  setMetaDescription,
+  setCanonicalUrl,
+  removeProductStructuredData,
+  setOpenGraph,
+  setTwitterCard,
+  removeSocialMeta,
+  DEFAULT_DESCRIPTION,
+  SITE_URL,
+} from '../utils/seo.js'
 
 const routes = [
   {
@@ -50,10 +59,25 @@ router.beforeEach((to, from, next) => {
     setMetaDescription(DEFAULT_DESCRIPTION)
     setCanonicalUrl(`${SITE_URL}/`)
     removeProductStructuredData()
+    // No og:image/twitter:image: the homepage's only imagery (heroSlides.js)
+    // is temporary picsum.photos placeholder URLs, not a real, permanent,
+    // project-owned asset — not reliable for social-sharing previews, so
+    // the image tags are omitted rather than pointing at a placeholder.
+    setOpenGraph({
+      title: to.meta.title,
+      description: DEFAULT_DESCRIPTION,
+      url: `${SITE_URL}/`,
+      type: 'website',
+    })
+    setTwitterCard({
+      title: to.meta.title,
+      description: DEFAULT_DESCRIPTION,
+    })
   } else if (to.name === 'NotFound') {
     setMetaDescription(DEFAULT_DESCRIPTION)
     setCanonicalUrl(null)
     removeProductStructuredData()
+    removeSocialMeta()
   }
 
   next()

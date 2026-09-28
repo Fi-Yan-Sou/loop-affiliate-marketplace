@@ -18,6 +18,10 @@ import {
   setCanonicalUrl,
   setProductStructuredData,
   removeProductStructuredData,
+  setOpenGraph,
+  setTwitterCard,
+  removeSocialMeta,
+  toAbsoluteImageUrl,
   truncateDescription,
   DEFAULT_DESCRIPTION,
   SITE_URL,
@@ -58,20 +62,46 @@ const loadProduct = async () => {
       setMetaDescription(DEFAULT_DESCRIPTION);
       setCanonicalUrl(null);
       removeProductStructuredData();
+      removeSocialMeta();
       return;
     }
 
     product.value = result;
 
+    // Computed once and reused for every SEO/social tag below, so og:title
+    // is always byte-identical to <title>, og:url always matches the
+    // canonical URL, and og:description/twitter:description always match
+    // the meta description — never a second, independently-drifting copy.
+    const productTitle = `${result.title} | ${result.brand} — ABCD Outfit`;
+    const productDescription = truncateDescription(result.description);
+    const productUrl = `${SITE_URL}/product/${result.id}`;
+    // Stable top-level image (Phase 2's own image strategy), never the
+    // currently selected color's image — same absolute-URL conversion
+    // Phase 2's Product JSON-LD already uses, reused rather than
+    // reimplemented.
+    const productImage = toAbsoluteImageUrl(result.images?.[0]);
+
     // Per-product SEO tags — generated only from this product's own data,
     // never invented. Runs on every load, including product-to-product
     // navigation via Related Products, so nothing from the previous
-    // product's title/description/canonical/structured-data is ever left
-    // behind.
-    setTitle(`${result.title} | ${result.brand} — ABCD Outfit`);
-    setMetaDescription(truncateDescription(result.description));
-    setCanonicalUrl(`${SITE_URL}/product/${result.id}`);
+    // product's title/description/canonical/structured-data/social tags is
+    // ever left behind.
+    setTitle(productTitle);
+    setMetaDescription(productDescription);
+    setCanonicalUrl(productUrl);
     setProductStructuredData(result);
+    setOpenGraph({
+      title: productTitle,
+      description: productDescription,
+      image: productImage,
+      url: productUrl,
+      type: "product",
+    });
+    setTwitterCard({
+      title: productTitle,
+      description: productDescription,
+      image: productImage,
+    });
 
     if (result.colors.length) {
       selectedColor.value = result.colors[0];
@@ -98,6 +128,7 @@ const loadProduct = async () => {
     setMetaDescription(DEFAULT_DESCRIPTION);
     setCanonicalUrl(null);
     removeProductStructuredData();
+    removeSocialMeta();
   } finally {
     isLoading.value = false;
   }
