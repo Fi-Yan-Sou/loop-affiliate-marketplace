@@ -73,6 +73,34 @@ export function truncateDescription(text, maxLength = 160) {
   return `${safeCut}…`
 }
 
+// Common SEO guidance keeps a full <title> around 50-60 characters so it
+// doesn't get truncated in search results — 60 is used as the ceiling for
+// the *entire* generated title, suffix included.
+const DEFAULT_MAX_TITLE_LENGTH = 60
+
+/**
+ * Builds "{title}{suffix}" (e.g. "{Product Title} — ABCD Outfit") and, only
+ * if the combined result exceeds maxLength, shortens `title` — never
+ * `suffix`, which is always preserved in full — at a word boundary, strips
+ * any awkward trailing punctuation left by the cut, and appends an ellipsis
+ * before the suffix. Never touches the underlying product title data; this
+ * only affects the generated title string.
+ */
+export function truncateTitle(title, suffix, maxLength = DEFAULT_MAX_TITLE_LENGTH) {
+  const full = `${title}${suffix}`
+  if (full.length <= maxLength) return full
+
+  const available = maxLength - suffix.length
+  if (available <= 0) return full // suffix alone already meets/exceeds the max — nothing sensible to cut
+
+  const truncated = title.slice(0, available)
+  const lastSpace = truncated.lastIndexOf(' ')
+  const safeCut = lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated
+  const cleanCut = safeCut.replace(/[\s,.;:\-–—]+$/, '')
+
+  return `${cleanCut}…${suffix}`
+}
+
 /* -------------------------------------------------------------------------
  * SEO Phase 2 — Product structured data (JSON-LD)
  * ---------------------------------------------------------------------- */

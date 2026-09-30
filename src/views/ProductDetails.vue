@@ -23,6 +23,7 @@ import {
   removeSocialMeta,
   toAbsoluteImageUrl,
   truncateDescription,
+  truncateTitle,
   DEFAULT_DESCRIPTION,
   SITE_URL,
 } from "../utils/seo.js";
@@ -72,7 +73,12 @@ const loadProduct = async () => {
     // is always byte-identical to <title>, og:url always matches the
     // canonical URL, and og:description/twitter:description always match
     // the meta description — never a second, independently-drifting copy.
-    const productTitle = `${result.title} | ${result.brand} — ABCD Outfit`;
+    // Format: "{Product Title} — ABCD Outfit" (brand is no longer appended
+    // separately — it was frequently already present in the product title
+    // itself, making titles needlessly long). truncateTitle() only shortens
+    // the product-title portion, and only when the full generated title
+    // would exceed a normal SEO length, always preserving the suffix.
+    const productTitle = truncateTitle(result.title, " — ABCD Outfit");
     const productDescription = truncateDescription(result.description);
     const productUrl = `${SITE_URL}/product/${result.id}`;
     // Stable top-level image (Phase 2's own image strategy), never the
