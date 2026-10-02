@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute, useRouter, RouterLink } from "vue-router";
 import Navbar from "../components/Navbar/Navbar.vue";
 import ProductGallery from "../components/ProductGallery/ProductGallery.vue";
 import ColorSelector from "../components/ColorSelector/ColorSelector.vue";
@@ -221,7 +221,7 @@ const estimatedDelivery = computed(() => {
 
     <main v-else id="main-content" class="container product-details__main">
       <nav class="product-details__breadcrumb" aria-label="Breadcrumb">
-        <button type="button" @click="backToHome">Home</button>
+        <RouterLink to="/" class="product-details__breadcrumb-home">Home</RouterLink>
         <span aria-hidden="true">/</span>
         <span>{{ product.category }}</span>
         <span aria-hidden="true">/</span>
@@ -294,12 +294,12 @@ const estimatedDelivery = computed(() => {
   margin-bottom: var(--space-3);
 }
 
-.product-details__breadcrumb button {
+.product-details__breadcrumb-home {
   color: var(--color-text-secondary);
   transition: color var(--transition-fast);
 }
 
-.product-details__breadcrumb button:hover {
+.product-details__breadcrumb-home:hover {
   color: var(--color-primary);
 }
 

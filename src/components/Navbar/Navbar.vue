@@ -1,17 +1,12 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import FilterBar from '../FilterBar/FilterBar.vue'
 import AnnouncementBar from '../AnnouncementBar/AnnouncementBar.vue'
 
 const emit = defineEmits(['search', 'filter-change'])
 
-const router = useRouter()
 const searchQuery = ref('')
-
-const goHome = () => {
-  router.push('/')
-}
 
 const onSearchInput = () => {
   emit('search', searchQuery.value.trim())
@@ -28,7 +23,7 @@ const onFilterChange = (filters) => {
 
     <header class="navbar">
       <div class="container navbar__inner">
-        <button class="navbar__brand" type="button" @click="goHome" aria-label="Loop — Go to homepage">
+        <RouterLink to="/" class="navbar__brand" aria-label="Loop — Go to homepage">
           <span class="navbar__logo" aria-hidden="true">
             <svg viewBox="0 0 42 42" width="42" height="42" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="21" cy="21" r="20" stroke="#0064D2" stroke-width="2.5" />
@@ -37,7 +32,7 @@ const onFilterChange = (filters) => {
             </svg>
           </span>
           <span class="navbar__name">Loop</span>
-        </button>
+        </RouterLink>
 
         <div class="navbar__search-col">
           <label class="navbar__search" for="global-search">

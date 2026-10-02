@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 
 const props = defineProps({
   product: { type: Object, required: true }, // colors[] entries may optionally include their own images[]
@@ -16,8 +16,14 @@ const toggleFavorite = (event) => {
   isFavorite.value = !isFavorite.value
 }
 
+// Single source of truth for this card's destination, reused by both
+// RouterLinks below (image + title) and kept for the Quick View/View
+// Details buttons, which still navigate programmatically — see template
+// comment for why those remain buttons rather than additional anchors.
+const productLink = computed(() => `/product/${props.product.id}`)
+
 const goToDetails = () => {
-  router.push(`/product/${props.product.id}`)
+  router.push(productLink.value)
 }
 
 const stars = computed(() => {
@@ -72,13 +78,15 @@ watch(colorCarouselImages, () => {
 
 <template>
   <article class="product-card" :class="`product-card--${variant}`">
-    <div class="product-card__image-wrap" @click="goToDetails">
-      <img
-        :src="displayedImage"
-        :alt="`${product.brand} ${product.title}`"
-        loading="lazy"
-        class="product-card__image"
-      />
+    <div class="product-card__image-wrap">
+      <RouterLink :to="productLink" class="product-card__image-link" :aria-label="`View details for ${product.brand} ${product.title}`">
+        <img
+          :src="displayedImage"
+          :alt="`${product.brand} ${product.title}`"
+          loading="lazy"
+          class="product-card__image"
+        />
+      </RouterLink>
 
       <button
         v-if="!minimal"
@@ -103,7 +111,7 @@ watch(colorCarouselImages, () => {
 
     <div class="product-card__body">
       <span class="product-card__brand">{{ product.brand }}</span>
-      <h3 class="product-card__title" @click="goToDetails">{{ product.title }}</h3>
+      <h3><RouterLink :to="productLink" class="product-card__title">{{ product.title }}</RouterLink></h3>
 
       <div v-if="!minimal" class="product-card__rating" :aria-label="`Rated ${product.rating} out of 5`">
         <svg
@@ -130,6 +138,13 @@ watch(colorCarouselImages, () => {
         <span v-if="product.oldPrice" class="product-card__old-price">${{ product.oldPrice.toFixed(2) }}</span>
       </div>
 
+      <!--
+        Quick View / View Details intentionally remain buttons calling
+        goToDetails(), not additional RouterLinks: the image and title above
+        already render a real, crawlable <a href> to this same destination,
+        so turning these into anchors too would just be duplicate links to
+        the same URL within one card, not an additional crawlable path.
+      -->
       <div class="product-card__actions">
         <button
           v-if="!minimal"
@@ -178,6 +193,15 @@ watch(colorCarouselImages, () => {
   background-color: var(--color-card);
   padding: var(--space-2);
   box-sizing: border-box;
+}
+
+/* The RouterLink now wrapping the image needs to behave like the plain div
+   it replaced — a full-size block filling product-card__image-wrap — so the
+   image's layout is unaffected by the new intervening element. */
+.product-card__image-link {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .product-card__image {
