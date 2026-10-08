@@ -181,6 +181,45 @@ async function capturePage(browser, routePath, waitForSelector) {
   }
 }
 
+/**
+ * Browser launch configuration — the only part of this script that differs
+ * between local and Vercel builds.
+ *
+ * LOCAL (process.env.VERCEL not set): exactly the options this script has
+ * always used, launching Puppeteer's own bundled Chrome.
+ *
+ * VERCEL (process.env.VERCEL is set on every Vercel build): Puppeteer's
+ * downloaded Chrome cannot start in Vercel's Amazon Linux 2023 build image
+ * because system libraries it needs (e.g. libnspr4) are not installed. The
+ * @sparticuz/chromium package ships a Chromium build plus its own copy of
+ * those libraries, so it is used instead. It is imported dynamically so
+ * local builds never load it. If the import or launch fails here, main()'s
+ * existing error handling still exits non-zero — failure stays fatal.
+ *
+ * The 'shell' headless mode and the awaited puppeteer.defaultArgs(...) call
+ * follow @sparticuz/chromium's documented Puppeteer usage.
+ */
+async function getLaunchOptions() {
+  // Standard, widely-recommended flags for running Chrome in CI/
+  // containerized Linux build environments (e.g. Vercel's build step),
+  // where the default sandbox often cannot be used.
+  const baseArgs = ['--no-sandbox', '--disable-setuid-sandbox']
+
+  if (!process.env.VERCEL) {
+    return { headless: true, args: baseArgs }
+  }
+
+  const { default: chromium } = await import('@sparticuz/chromium')
+  return {
+    headless: 'shell',
+    executablePath: await chromium.executablePath(),
+    args: await puppeteer.defaultArgs({
+      args: [...chromium.args, ...baseArgs],
+      headless: 'shell',
+    }),
+  }
+}
+
 async function main() {
   if (!existsSync(join(DIST_DIR, 'index.html'))) {
     fail('dist/index.html not found. Run `vite build` before this script — this is a post-build step, not a replacement for it.')
@@ -202,13 +241,7 @@ async function main() {
   const server = await startServer()
 
   console.log('[prerender] Launching headless Chrome ...')
-  const browser = await puppeteer.launch({
-    headless: true,
-    // Standard, widely-recommended flags for running Chrome in CI/
-    // containerized Linux build environments (e.g. Vercel's build step),
-    // where the default sandbox often cannot be used.
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  })
+  const browser = await puppeteer.launch(await getLaunchOptions())
 
   const captured = []
   const failures = []
