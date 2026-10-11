@@ -3170,7 +3170,19 @@ export const getProductById = (id) => products.find((p) => p.id === Number(id))
 
 export const getBestSellers = () => products.filter((p) => p.bestSeller).slice(0, 10)
 
-export const getRelatedProducts = (product, limit = 8) =>
-  products
-    .filter((p) => p.id !== product.id && (p.category === product.category || p.brand === product.brand))
-    .slice(0, limit)
+// Related products share the current product's category OR brand (current
+// product excluded). Matches are ordered cyclically starting from the first
+// match AFTER the current product in catalog order, wrapping around to the
+// start, instead of always taking the first matches in the catalog. A plain
+// slice(0, limit) gave the same early products to every page, so some pages
+// never appeared in anyone's related list. Deterministic: no randomness.
+export const getRelatedProducts = (product, limit = 8) => {
+  const position = products.findIndex((p) => p.id === product.id)
+  const matches = products.filter(
+    (p) => p.id !== product.id && (p.category === product.category || p.brand === product.brand)
+  )
+  const firstAfter = matches.findIndex((p) => products.indexOf(p) > position)
+  const ordered =
+    firstAfter === -1 ? matches : [...matches.slice(firstAfter), ...matches.slice(0, firstAfter)]
+  return ordered.slice(0, limit)
+}
