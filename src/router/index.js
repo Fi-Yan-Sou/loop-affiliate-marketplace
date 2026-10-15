@@ -10,6 +10,8 @@ import {
   SITE_URL,
 } from '../utils/seo.js'
 
+const HOME_OG_IMAGE = `${SITE_URL}/images/og-image.jpg`
+
 const routes = [
   {
     path: '/',
@@ -59,19 +61,19 @@ router.beforeEach((to, from, next) => {
     setMetaDescription(DEFAULT_DESCRIPTION)
     setCanonicalUrl(`${SITE_URL}/`)
     removeProductStructuredData()
-    // No og:image/twitter:image: the homepage's only imagery (heroSlides.js)
-    // is temporary picsum.photos placeholder URLs, not a real, permanent,
-    // project-owned asset — not reliable for social-sharing previews, so
-    // the image tags are omitted rather than pointing at a placeholder.
+    // Use the permanent project-owned image for homepage social previews.
+    // Product pages continue to set their own social images in ProductDetails.vue.
     setOpenGraph({
       title: to.meta.title,
       description: DEFAULT_DESCRIPTION,
+      image: HOME_OG_IMAGE,
       url: `${SITE_URL}/`,
       type: 'website',
     })
     setTwitterCard({
       title: to.meta.title,
       description: DEFAULT_DESCRIPTION,
+      image: HOME_OG_IMAGE,
     })
   } else if (to.name === 'NotFound') {
     setMetaDescription(DEFAULT_DESCRIPTION)
