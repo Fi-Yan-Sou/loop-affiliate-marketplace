@@ -12,13 +12,16 @@ import {
 
 const HOME_OG_IMAGE = `${SITE_URL}/images/og-image.jpg`
 
+const HOME_DESCRIPTION =
+  'Discover curated fashion finds from eBay and Depop at ABCD Outfit. Explore clothing styles and compare options to find your next favorite look.'
+
 const routes = [
   {
     path: '/',
     name: 'Home',
     component: () => import('../views/Home.vue'),
     meta: {
-      title: 'Loop — Curated Clothing from eBay & Depop'
+      title: 'ABCD Outfit | Curated Fashion from eBay & Depop'
     }
   },
   {
@@ -58,21 +61,21 @@ router.beforeEach((to, from, next) => {
   // the product loads, and this guard intentionally leaves them alone so it
   // never overwrites/races the view's own update.
   if (to.name === 'Home') {
-    setMetaDescription(DEFAULT_DESCRIPTION)
+    setMetaDescription(HOME_DESCRIPTION)
     setCanonicalUrl(`${SITE_URL}/`)
     removeProductStructuredData()
     // Use the permanent project-owned image for homepage social previews.
     // Product pages continue to set their own social images in ProductDetails.vue.
     setOpenGraph({
       title: to.meta.title,
-      description: DEFAULT_DESCRIPTION,
+      description: HOME_DESCRIPTION,
       image: HOME_OG_IMAGE,
       url: `${SITE_URL}/`,
       type: 'website',
     })
     setTwitterCard({
       title: to.meta.title,
-      description: DEFAULT_DESCRIPTION,
+      description: HOME_DESCRIPTION,
       image: HOME_OG_IMAGE,
     })
   } else if (to.name === 'NotFound') {
